@@ -27,6 +27,7 @@ DEER_PARAMS = {
     "think_ratio": 0.6,
     "max_judge_steps": 2,
     "temperature": 0.6,
+    "min_think_tokens": 300,
 }
 
 DATASET_CONFIG = {
@@ -162,6 +163,7 @@ async def deer_inference(question, dataset_key):
     think_budget = int(DEER_PARAMS["think_ratio"] * MAX_TOKENS)
     max_steps = DEER_PARAMS["max_judge_steps"]
     temp = DEER_PARAMS["temperature"]
+    min_think_tokens = DEER_PARAMS.get("min_think_tokens", 0)
 
     thinking = ""
     total_completion_tokens = 0
@@ -253,6 +255,15 @@ async def deer_inference(question, dataset_key):
             gt = thinking_body.find(">", idx_t)
             if gt >= 0:
                 thinking_body = thinking_body[gt + 1:]
+
+        est_think = max(1, len(thinking_body) // 4)
+        if est_think < min_think_tokens:
+            thinking += "Wait"
+            judge_step += 1
+            if judge_step >= max_steps:
+                think_end = time.perf_counter() - t0
+                break
+            continue
 
         prob_messages = [
             {"role": "user", "content": question},
