@@ -305,7 +305,8 @@ async def deer_inference(question, dataset_key):
 
         ans_messages = [
             {"role": "user", "content": question},
-            {"role": "assistant", "content": thinking_body + "\n</think >\n"},
+            {"role": "assistant", "content": "<think >\n" + thinking_body + "\n</think >"},
+            {"role": "user", "content": "/no_think\nBased ONLY on the reasoning above, output your final answer. Do NOT re-derive. Use the format: \\boxed{answer} or #### answer"},
         ]
         answer_text, ans_usage, _ = await _stream_simple(ans_messages, 512, temp)
         total_completion_tokens += ans_usage.get("completion_tokens", 0)
